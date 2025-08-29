@@ -1,0 +1,6 @@
+int64 fieldID
+int64 implementWidth
+float64 turningRadius
+---
+float64[] x
+float64[] y
