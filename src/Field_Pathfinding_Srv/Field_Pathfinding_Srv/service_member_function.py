@@ -13,6 +13,11 @@ class FieldPathfindingService(Node):
 
     def fpathfinding_callback(self, request, response):
         #do stuff
+        response.fieldID
+        response.implementWidth
+        response.turningRadius
+        response.orientationPreference #WbySW/NbyNW/none
+
         response.x = [0]
         response.y = [0] 
         return response

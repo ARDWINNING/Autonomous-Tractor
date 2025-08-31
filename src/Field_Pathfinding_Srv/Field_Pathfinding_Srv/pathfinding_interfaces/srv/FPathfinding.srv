@@ -1,6 +1,9 @@
 int64 fieldID
 int64 implementWidth
 float64 turningRadius
+string orientationPreferences
+float64 startX
+float64 startY
 ---
 float64[] x
 float64[] y
