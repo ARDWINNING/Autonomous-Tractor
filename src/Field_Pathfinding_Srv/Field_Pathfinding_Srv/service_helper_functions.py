@@ -31,12 +31,12 @@ def end_of_field_pos(arrable_multiplier, implement_width, points):
             computational_height = trial_height if point.y > trial_height else point.y
             computational_width = point.x
 
-        current_error_value = (trial_height*implement_width - sum_arrable*arrable_multiplier)/(trial_height*implement_width)
+        current_error_value = (sum_arrable*arrable_multiplier)/(trial_height*implement_width)
         if (error_value == None):
             error_value = current_error_value
             optimal_height = trial_height
         else:
-            if(current_error_value < error_value):
+            if(current_error_value > error_value):
                 error_value = current_error_value
                 optimal_height = trial_height
     return optimal_height
