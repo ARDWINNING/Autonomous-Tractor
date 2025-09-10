@@ -1,18 +1,10 @@
 from typing import NamedTuple
 from typing import List
-import json
 from math import acos, atan, cos, sin, tan, pi
 
 class point_object(NamedTuple):
     x: float
     y: float
-
-def load_json(field_id: int):
-    with open(str(field_id)+'.json', 'r') as file:
-        
-        data = json.load(file)
-    return data
-
 
 def end_of_field_pos(arrable_multiplier: float, implement_width: float, points: list[point_object]) -> point_object: 
     """
@@ -155,21 +147,36 @@ def turn_height_smoothing(granularity: int, theta: float, turning_disparity: flo
     insertion_index = turn_height_smoothing(granularity, atan(abs(points[insertion_index].y - points[insertion_index-1].y)/abs(points[insertion_index].x - points[insertion_index-1].x)), 0, turning_radius, points, insertion_index)
     return insertion_index
 
-def bounded_turn(granularity: int,  insertion_index: int, theta: float, turning_radius: float, points: list[point_object]):
+def bounded_turn(granularity: int,  insertion_index: int, theta: float, turning_radius: float, points: list[point_object]) -> int:
     if(points[insertion_index].y < points[insertion_index-1].y):
         phi = theta
+        slope_down = False
     else:
         phi = pi/2 + theta
-    phi += 1 #avoids unused error will finish this
-    return points  
+        slope_down = True
+    theta = atan((abs(points[insertion_index].y - points[insertion_index-1].y))/(turning_disparity))
+    turning_disparity = (points[insertion_index].x-points[insertion_index - 1].x) - 2 * turning_radius
+    temp_list = [points[insertion_index - 1]]
+    clockwise_turn_loop(0, phi, granularity, temp_list, turning_radius, (True, True, True))
+    temp_list.remove(temp_list[0])
+    insertion_index = combine_points(False, points, temp_list, insertion_index)
+    if(turning_disparity):
+        aug_x = turning_disparity
+        aug_y = turning_disparity * tan(theta) * -1 if slope_down else 1
+        points.insert(insertion_index, point_object(x = (points[insertion_index - 1] + aug_x), y = (points[insertion_index - 1] + aug_y)))
+    temp_list = [points[insertion_index-1]]
+    clockwise_turn_loop(phi, pi, granularity, temp_list, turning_radius, (True, False, False))
+    temp_list.remove(temp_list[0])
+    insertion_index = combine_points(False, points, temp_list, insertion_index) 
+    return insertion_index 
 
-def end_of_field_turn(implement_width: float, turning_radius: float, points: list[point_object]) -> List[point_object]: # For under field where smaller y is away from field wrap the whole call in a transformer that takes points and rectifies the numbers and undoes at the end by making all input y/x negative?
+def end_of_field_turn(granularity: int, implement_width: float, turning_radius: float, points: list[point_object]): # For under field where smaller y is away from field wrap the whole call in a transformer that takes points and rectifies the numbers and undoes at the end by making all input y/x negative?
     """
      # The points input is a list consisting of the output of e_o_f_pos for the end of swarth a and beginning of swarth b and theta 2 is the ang
      # This will then determine the correct turn and produce a list of points to follow for the turn 
     """
     turning_disparity = implement_width - 2 * turning_radius
     theta = atan((abs(points[1].y - points[0].y))/(implement_width)) 
-    running_index = turn_height_smoothing(16, theta, turning_disparity, turning_radius, points) # Look at code to ensure all good with the augmented passing structure
-    bounded_turn(16, running_index, theta, turning_radius, points)
-    return points
+    running_index = turn_height_smoothing(granularity, theta, turning_disparity, turning_radius, points) # Look at code to ensure all good with the augmented passing structure
+    running_index = bounded_turn(granularity, running_index, theta, turning_radius, points)
+    return
