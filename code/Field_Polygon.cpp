@@ -1,62 +1,59 @@
 #include "Field_Polygon.hpp"
 
-explicit Field::Field(std::vector(point) field, const char* name, int min_sample)
+Field::Field(point* start, const char* name)
 {
   field_name = name;
-  min_sampling_freq = min_sample;
+  VW_sample(start);
 }
 
-void Field::sample(std::vector(point) polygon, float x_sample, float y_sample)
+void Field::VW_sample(point* initial)
 {
-  point* last = nullptr;
-  point* first = polygon[0]; 
-}
-
-std::pair<int, int> Field::sample_distance(const std::vector(point) polygon, int min_distance, float precision)
-{
-  float x_max, x_min = polygon[0].x;
+  point* current = VW_calculator(initial);
+  point* place = current;
+  current = current->next;
   
-  float y_max, y_min = polygon[0].y;
-  
-  for(int i = 0; i < polygon.size(); i++)
+  while(current != place)
   {
-    x_val = polygon[i].x;
-    y_val = polygon[i].y;
-
-    x_max = (x_val > x_max) ? x_val : x_max;
-    x_min = (x_val < x_min) ? x_val : x_min;
-
-    y_max = (y_val > y_max) ? y_val : y_max;
-    y_min = (y_val < y_min) ? y_val : y_min;
-  }
-  
-  float x_dist = x_max - x_min;
-  float y_dist = y_max - y_min;
-
-  std::pair<float, float> ret(0,0);
-  ret.first = sample_optimisation(x_dist, min_distance, precision);
-  ret.second = sample_optimisation(y_dist, min_distance, precision);
- 
-  return ret;
-}
-
-float Field::sample_optimisation(float distance, int minimum, float precision){
-  float best_sample = distance % minimum_dist;
-  float opt_distance = minimum;
-  float curr_sample;
-
-  for(int j = (1/precision * minimum) - 1; j > 0; j--)
-  {
-    curr_sample = distance % j*precision;
-    if(best_sample > curr_sample)
-    {
-      best_sample = curr_sample;
-      opt_distance = j*precision;
-    }
+    current = VW_calculator(current);
+    current = current->next;
   }
 
-  return opt_distance;
+  place = current;
+  field.push_back(current);
+  current = current->next;
+  
+  while(current != place)
+  {
+    field.push_back(current);
+    current = current->next;
+  }
+  return;
 }
 
+point* Field::VW_calculator(point* curr)
+{
+  if(VW_area(curr) < deletion_threshold)
+  {
+    curr->prev->next = curr->next;
+    curr->next->prev = curr->prev;
+    (void)VW_calculator(curr->prev);
+    point* deepest = VW_calculator(curr->next);
+    delete curr;
+    curr = nullptr;
+    return deepest;
+  }
+  return curr;
+}
 
+float Field::VW_area(point* targ)
+{
+  float prev_x = targ->prev->x;
+  float prev_y = targ->prev->y;
+  float next_x = targ->next->x;
+  float next_y = targ->next->y;
+  
+  float ret = prev_x * targ->y + targ->x * next_y + next_x * prev_y;
+  ret -= prev_x * next_y + targ->x * prev_y + next_x * targ->y;
+  return 0.5 * std::abs(ret);
+}
 

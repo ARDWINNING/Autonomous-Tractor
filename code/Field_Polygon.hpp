@@ -1,27 +1,24 @@
-#include <vectors>
-#include <stdio>
-
+#include <vector>
+#include <math.h>
 
 struct point {
   int x;
   int y;
   point* next;
+  point* prev;
 };
 
 #define referance_coord_x 0
 #define referance_coord_y 0
-#define precision 0.1
-
+#define deletion_threshold 1
 
 class Field{
   public:
-      const char* field_name;    
-      const int min_sampling_freq;
-      Field(std::vector(point), const char*, int);
-      static void sample(std::vector(point), float, float);
-      static std::pair<float, float>  sample_distance(std::vector(point), int, float);
-      static float sample_optimisation(float, int, float);
+    const char* field_name;    
+    explicit Field(point*, const char*);
+    void VW_sample(point*);
+    point* VW_calculator(point*);
+    float VW_area(point*);
   private:
-      std::vector(point) field;
-      
-}
+    std::vector<point*> field; //ensure that list is unique so end points to first as next
+};
