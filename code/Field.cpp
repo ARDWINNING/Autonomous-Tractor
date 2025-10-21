@@ -1,10 +1,11 @@
 #include "Field.hpp"
 
-Field::Field(point* start, const char* name)
-{
-  field_name = name;
+Field::Field(point* start, std::vector<obstacle*> Obstacles, const char* name)
+  : obstacles(Obstacles), field_name(name) {
   VW_sample(start);
 }
+
+// Visvalingam-Whyatt (VW) Optimisation 
 
 void Field::VW_sample(point* initial)
 {
@@ -57,6 +58,37 @@ float Field::VW_area(const point* targ)
   return 0.5 * std::abs(ret);
 }
 
+// Boustrophedon Cellular Decomposition (BCD)
+
+bool Field::BCD()
+{
+  std::vector<float> boundaries;
+  point* start = field[0];
+  int count = 0;
+  
+  for(int i = 0; i < obstacles.size(); i++)
+  {
+    boundaries.push_back(obstacles[i]->x_extremes.first);
+    boundaries.push_back(obstacles[i]->x_extremes.second);
+  }
+  std::sort(boundaries.begin(), boundaries.end());
+  int place = boundaries.size();
+  if(int j = 0; j < boundaries; j++)
+  {
+    if(start->x < boundaries[j])
+    {
+      place = j;
+      exit;
+    }
+  }
+  
+  
+  
+  return true;
+}
+
+// Helper Functions
+
 point* Field::infer_point(point* before, const float actual, const char axis)
 {
   float x;
@@ -106,7 +138,35 @@ point* Field::infer_point(point* before, const float actual, const char axis)
   return ret;
 }
 
+void Field::get_extremes()
+{
+  float x_max = field[0]->x;
+  float x_min = field[0]->x;
+  float y_max = field[0]->y;
+  float y_min = field[0]->y;
 
+  for(int i = 1; i < field.size(); i++)
+  {
+    if(field[i]->x > x_max)
+    {
+      x_max = field[i]->x;
+    }
+    if(field[i]->x < x_min)
+    {
+      x_min = field[i]->x;
+    }
+    if(field[i]->y > y_max)
+    {
+      y_max = field[i]->y;
+    }
+    if(field[i]->y < y_min)
+    {
+      y_min = field[i]->y;
+    }
+  }
+  x_extreme = std::pair(x_min, x_max);
+  y_extreme = std::pair(y_min, y_max);
+}
 
 
 
