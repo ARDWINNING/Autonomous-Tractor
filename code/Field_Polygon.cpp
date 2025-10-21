@@ -45,7 +45,7 @@ point* Field::VW_calculator(point* curr)
   return curr;
 }
 
-float Field::VW_area(point* targ)
+float Field::VW_area(const point* targ)
 {
   float prev_x = targ->prev->x;
   float prev_y = targ->prev->y;
@@ -56,4 +56,54 @@ float Field::VW_area(point* targ)
   ret -= prev_x * next_y + targ->x * prev_y + next_x * targ->y;
   return 0.5 * std::abs(ret);
 }
+
+point* Field::infer_point(point* before, const float actual, const char axis)
+{
+  float x;
+  float y;
+  point* ret;
+
+  if(axis == 'x')
+  {
+    float x = actual;
+    if(before->x < before->next->x)// Anticlockwise ordering fix, difficult will visualise
+    {
+      float grad = (before->next->y - before->y) / (before->next->x - before->x);
+      float y = before->y + grad * (actual - before->x);
+      ret = new point(x, y, before, before->prev);
+      before->prev = ret;
+      before->prev->next = ret;
+    }
+    else
+    {
+      float grad = (before->prev->y - before->y) / (before->prev->x - before->x);
+      float y = before->y + grad * (actual - before->x);
+      ret = new point(x, y, before->prev, before);
+      before->next = ret;
+      before->next->prev = ret;
+    }
+  }
+  else
+  {
+    float y = actual;
+    if(before->y < before->next->y)
+    {
+      float grad = (before->next->x - before->x) / (before->next->y - before->y);
+      float x = before->x + grad * (actual - before->y);
+    }
+    else
+    {
+      float grad = (before->prev->x - before->x) / (before->prev->y - before->y);
+      float x = before->x + grad * (actual - before->y);
+    }
+  }
+  return ret;
+}
+
+
+
+
+
+
+
 
