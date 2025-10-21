@@ -1,4 +1,4 @@
-#include "Field_Polygon.hpp"
+#include "Field.hpp"
 
 Field::Field(point* start, const char* name)
 {
@@ -65,36 +65,42 @@ point* Field::infer_point(point* before, const float actual, const char axis)
 
   if(axis == 'x')
   {
-    float x = actual;
-    if(before->x < before->next->x)// Anticlockwise ordering fix, difficult will visualise
-    {
-      float grad = (before->next->y - before->y) / (before->next->x - before->x);
-      float y = before->y + grad * (actual - before->x);
-      ret = new point(x, y, before, before->prev);
-      before->prev = ret;
-      before->prev->next = ret;
-    }
-    else
+    float x = actual; 
+    if(before->x < before->prev->x) // geoJSON is anticlockwise
     {
       float grad = (before->prev->y - before->y) / (before->prev->x - before->x);
       float y = before->y + grad * (actual - before->x);
-      ret = new point(x, y, before->prev, before);
-      before->next = ret;
+      ret = new point(x, y, before, before->prev);
+      before->prev->next = ret;
+      before->prev = ret;
+    }
+    else
+    {
+      float grad = (before->next->y - before->y) / (before->next->x - before->x);
+      float y = before->y + grad * (actual - before->x);
+      ret = new point(x, y, before->next, before);
       before->next->prev = ret;
+      before->next = ret;
     }
   }
   else
   {
     float y = actual;
-    if(before->y < before->next->y)
-    {
-      float grad = (before->next->x - before->x) / (before->next->y - before->y);
-      float x = before->x + grad * (actual - before->y);
-    }
-    else
+    if(before->y < before->prev->y)
     {
       float grad = (before->prev->x - before->x) / (before->prev->y - before->y);
       float x = before->x + grad * (actual - before->y);
+      ret = new point(x, y, before, before->prev);
+      before->prev->next = ret;
+      before->prev = ret;
+    }
+    else
+    {
+      float grad = (before->next->x - before->x) / (before->next->y - before->y);
+      float x = before->x + grad * (actual - before->y);
+      ret = new point(x, y, before->next, before);
+      before->next->prev = ret;
+      before->next = ret;
     }
   }
   return ret;
