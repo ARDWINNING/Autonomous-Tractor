@@ -9,6 +9,8 @@ struct point {
   point* prev;
   point(int x_val, int y_val, point* n = nullptr, point* p = nullptr)
     : x(x_val), y(y_val), next(n), prev(p) {}
+  point(point* p)
+    : x(p->x), y(p->y), next(p->next), prev(p->prev) {}
 };
 
 struct obstacle {
@@ -25,18 +27,21 @@ class Field{
   public:
     const char* field_name;    
     explicit Field(point*, std::vector<obstacle*>, const char*);
+
     // Visvalingam-Whyatt optimisation, method: deletion threshold
     // Could look into a heap implementation
     // Would prefer using a threshold than number of points due to variability in fields
     void VW_sample(point*);
     point* VW_calculator(point*);
     float VW_area(const point*);
+
     // Boustrophedon Cellular Decomposition
     bool BCD();
 
     // Helper Functions
     point* infer_point(point*, const float, const char);
     void get_extremes();
+    point* add(point*, int);
   private:
     std::vector<point*> field;
     std::pair<float, float> x_extreme;

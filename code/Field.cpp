@@ -63,30 +63,72 @@ float Field::VW_area(const point* targ)
 bool Field::BCD()
 {
   std::vector<float> boundaries;
-  point* start = field[0];
+  point* curr = field[0];
   int count = 0;
-  
+  std::vector<point*> fill = {};  
   for(int i = 0; i < obstacles.size(); i++)
   {
+    cells.push_back(fill);
+    cells.push_back(fill);
     boundaries.push_back(obstacles[i]->x_extremes.first);
     boundaries.push_back(obstacles[i]->x_extremes.second);
   }
+
   std::sort(boundaries.begin(), boundaries.end());
   int place = boundaries.size();
-  if(int j = 0; j < boundaries; j++)
+  for(int j = 0; j < boundaries.size(); j++)
   {
-    if(start->x < boundaries[j])
+    if(curr->x < boundaries[j])
     {
       place = j;
-      exit;
+      break;
     }
   }
-  
-  
-  
+  point* end = curr->prev;
+
+  while(curr != end)
+  {
+    if(curr->x < boundaries[place])
+    {
+      if(place == 0)
+      {
+        add(curr, place);
+      }
+      else if(curr->x > boundaries[place-1])
+      {
+        add(curr, place);
+      }
+      else
+      {
+        cells[place].emplace(cells[place].begin(), infer_point(curr->prev, boundaries[place-1], 'x'));
+        place--;
+      }
+    }
+    else
+    {
+      cells[place+1].emplace(cells[place+1].begin(), infer_point(curr->prev, boundaries[place], 'x'));
+      place++;
+    }
+    if(curr != end->next)
+    {
+      end = end->next;
+    }
+  }
   return true;
 }
 
+point* Field::add(point* p, int level)
+{
+  cells[level].emplace(cells[level].begin(), p);
+  if(cells[level].size() > 1)
+  {
+    if(p->prev != cells[level][1])
+    {
+      p->prev = cells[level][1];
+    }
+  }
+  return p->next;
+}
 // Helper Functions
 
 point* Field::infer_point(point* before, const float actual, const char axis)
