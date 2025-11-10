@@ -19,7 +19,6 @@ void Field::VW_sample(point* initial)
     current = current->next;
   }
 
-  place = current;
   field.push_back(current);
   current = current->next;
   
@@ -60,12 +59,14 @@ float Field::VW_area(const point* targ)
 
 // Boustrophedon Cellular Decomposition (BCD)
 
-bool Field::BCD()
+bool Field::BCD_x()
 {
   std::vector<float> boundaries;
   point* curr = field[0];
   int count = 0;
+  bool done = false;
   std::vector<point*> fill = {};  
+  cells.push_back(fill);
   for(int i = 0; i < obstacles.size(); i++)
   {
     cells.push_back(fill);
@@ -109,10 +110,20 @@ bool Field::BCD()
       cells[place+1].emplace(cells[place+1].begin(), infer_point(curr->prev, boundaries[place], 'x'));
       place++;
     }
-    if(curr != end->next)
+    if(curr != end->next && !done)
     {
       end = end->next;
+      done = true;
     }
+  }
+  return true;
+}
+
+bool Field::BCD_y()
+{
+  for(int i = 1; i < cells.size() - 2; i++) // First and last have no obstacles * look for cutoff sections 
+  {
+    // Loop through  
   }
   return true;
 }
@@ -129,6 +140,7 @@ point* Field::add(point* p, int level)
   }
   return p->next;
 }
+
 // Helper Functions
 
 point* Field::infer_point(point* before, const float actual, const char axis)

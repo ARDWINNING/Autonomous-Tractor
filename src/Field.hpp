@@ -1,6 +1,9 @@
 #include <vector>
 #include <math.h>
 #include <algorithm>
+#define referance_coord_x 0
+#define referance_coord_y 0
+#define deletion_threshold 1 // Placeholder
 
 struct point {
   float x;
@@ -16,18 +19,15 @@ struct point {
 struct obstacle {
   std::vector<point*> perimeter;
   std::pair<float, float> x_extremes;
-  std::pair<float, float> y_extremes;
+  std::pair<float, float> y_of_x_extremes;
 };
 
-#define referance_coord_x 0
-#define referance_coord_y 0
-#define deletion_threshold 1 // Placeholder
 
 class Field{
   public:
     const char* field_name;    
     explicit Field(point*, std::vector<obstacle*>, const char*);
-
+    ~Field();
     // Visvalingam-Whyatt optimisation, method: deletion threshold
     // Could look into a heap implementation
     // Would prefer using a threshold than number of points due to variability in fields
@@ -36,12 +36,14 @@ class Field{
     float VW_area(const point*);
 
     // Boustrophedon Cellular Decomposition
-    bool BCD();
+    bool BCD_x();
+    bool BCD_y();
 
     // Helper Functions
     point* infer_point(point*, const float, const char);
     void get_extremes();
     point* add(point*, int);
+
   private:
     std::vector<point*> field;
     std::pair<float, float> x_extreme;
