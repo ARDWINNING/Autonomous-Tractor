@@ -1,7 +1,7 @@
 #include "Field.hpp"
 
-Field::Field(point* start, std::vector<obstacle*> Obstacles, const char* name)
-  : obstacles(Obstacles), field_name(name) {
+Field::Field(point* start, obstacle* InitObstacle, const char* name)
+  : initial_obstacle(InitObstacle), field_name(name) {
   VW_sample(start);
 }
 
@@ -59,73 +59,77 @@ float Field::VW_area(const point* targ)
 
 // Boustrophedon Cellular Decomposition (BCD)
 
-bool Field::BCD_x()
+// If possible add in logic to combine cells that are split by an obstacles boundary not impacting the cell, I.E. obstacle1 is below Obstacle2 and celli is bellow obstacle one, it will be split by obstacle2's boundary. make a clockwise linked list structure with completed cells and then check neighbours 
+
+bool Field::BCD()
 {
-  std::vector<float> boundaries;
-  point* curr = field[0];
-  int count = 0;
-  bool done = false;
-  std::vector<point*> fill = {};  
-  cells.push_back(fill);
-  for(int i = 0; i < obstacles.size(); i++)
+  // Go back to obstacle array sorted find place
+  int curr_boundary = 1; // Placeholder
+  std::vector<std::pair<float, float>> boundaries;
+  point* curr = field_start;
+  std::vector<std::vector<point*>> cell(boundaries.size());
+  obstacle* ob;
+  float comparator = curr->next->x < curr->x ? boundaries[curr_boundary].second : boundaries[curr_boundary].first;
+  do
   {
-    cells.push_back(fill);
-    cells.push_back(fill);
-    boundaries.push_back(obstacles[i]->x_extremes.first);
-    boundaries.push_back(obstacles[i]->x_extremes.second);
-  }
+    curr = curr->prev;
+  } while (curr->next->x < curr->x ? comparator > curr->prev->x : comparator < curr->prev->x);
+  for(int i = 0; i < boundaries.size(); i++)
+  {
+    float front = curr->next->x < curr->x ? boundaries[curr_boundary].first : boundaries[curr_boundary].second;
+    float back = curr->next->x < curr->x ? boundaries[curr_boundary].second : boundaries[curr_boundary].first;
 
-  std::sort(boundaries.begin(), boundaries.end());
-  int place = boundaries.size();
-  for(int j = 0; j < boundaries.size(); j++)
-  {
-    if(curr->x < boundaries[j])
+    cell[i].push_back(add(curr, back));
+    while(curr->next->x < curr->x ? curr->next->x > front : curr->next->x < front)
     {
-      place = j;
-      break;
+      cell[i].push_back(curr);
     }
-  }
-  point* end = curr->prev;
-
-  while(curr != end)
-  {
-    if(curr->x < boundaries[place])
+    cell[i].push_back(add(curr, front));
+    ob = find_obstacle(curr, boundaries[curr_boundary]);
+    if(ob)
     {
-      if(place == 0)
-      {
-        add(curr, place);
-      }
-      else if(curr->x > boundaries[place-1])
-      {
-        add(curr, place);
-      }
-      else
-      {
-        cells[place].emplace(cells[place].begin(), infer_point(curr->prev, boundaries[place-1], 'x'));
-        place--;
-      }
+      //segment the obstacle to be only the series of points the append the std::vector range to the list for cell[i]
+      //check that the bounds are included as points if not infer them with add()
     }
-    else
-    {
-      cells[place+1].emplace(cells[place+1].begin(), infer_point(curr->prev, boundaries[place], 'x'));
-      place++;
-    }
-    if(curr != end->next && !done)
-    {
-      end = end->next;
-      done = true;
-    }
+    cell[i][cell[i].size()-1]->next = cell[i][0];
+    cell[i][0]->next = cell[i][cell[i].size()-1];
   }
   return true;
 }
 
-bool Field::BCD_y()
+obstacle* Field::find_obstacle(point* p, std::pair<float, float> extr)
 {
-  for(int i = 1; i < cells.size() - 2; i++) // First and last have no obstacles * look for cutoff sections 
+  bool dir = p->next->x < p->x;
+  obstacle* out = nullptr;
+  point* curr = nullptr;
+  point* mid;
+  for(obstacle* o = initial_obstacle; o != nullptr; o = o->next)
   {
-    // Loop through  
+    if(o->x_extremes.first <= p->x && o->x_extremes.second >= p->x)
+    {
+      point* mid = o->central_line;
+      do{
+        mid = mid->next;
+      }while(mid->x < (extr.second - extr.first)/2 + extr.first);
+      
+      if(!curr)
+      {
+        curr = mid;
+        out = o;
+      }
+      else if(dir && mid->y > curr->y) 
+      {
+        curr = mid;
+        out = o;
+      }
+      else if(mid->y < curr->y)
+      {
+        curr = mid;
+        out = o;
+      }
+    }
   }
-  return true;
+  return out;
 }
 
 point* Field::add(point* p, int level)
@@ -218,6 +222,7 @@ void Field::get_extremes()
       y_min = field[i]->y;
     }
   }
+  
   x_extreme = std::pair(x_min, x_max);
   y_extreme = std::pair(y_min, y_max);
 }
