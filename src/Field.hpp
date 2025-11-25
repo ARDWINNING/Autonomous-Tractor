@@ -48,6 +48,7 @@ class Field{
     bool BCD();
 
     // Helper Functions
+  std::vector<point*> obstacle_points(obstacle*, std::pair<float, float>, int);
     obstacle* find_obstacle(point*, std::pair<float, float>);
     point* infer_point(point*, const float, const char);
     void get_extremes();

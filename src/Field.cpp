@@ -88,8 +88,19 @@ bool Field::BCD()
     ob = find_obstacle(curr, boundaries[curr_boundary]);
     if(ob)
     {
-      //segment the obstacle to be only the series of points the append the std::vector range to the list for cell[i]
-      //check that the bounds are included as points if not infer them with add()
+      std::vector<point*> points;
+      if(curr->next->x < curr->x)
+      {
+        points = obstacle_points(ob, boundaries[curr_boundary], 2);
+      }
+      else
+      {
+        points = obstacle_points(ob, boundaries[curr_boundary], 0);
+      }
+      for(int j = 0; j < points.size(); j++)
+      {
+        cell[i].push_back(points[i]);
+      }
     }
     cell[i][cell[i].size()-1]->next = cell[i][0];
     cell[i][0]->next = cell[i][cell[i].size()-1];
@@ -130,6 +141,15 @@ obstacle* Field::find_obstacle(point* p, std::pair<float, float> extr)
     }
   }
   return out;
+}
+
+std::vector<point*> Field::obstacle_points(obstacle* o, std::pair<float, float> extr, int pos)
+{
+      //check that the bounds are included as points if not infer them with add()
+  if(pos == 0)
+  {
+
+  }
 }
 
 point* Field::add(point* p, int level)
