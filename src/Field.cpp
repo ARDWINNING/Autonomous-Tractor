@@ -63,17 +63,19 @@ float Field::VW_area(const point* targ)
 
 bool Field::BCD()
 {
-  // Go back to obstacle array sorted find place
+  // Got to find and update place (curr_boundary)
   int curr_boundary = 1; // Placeholder
   std::vector<std::pair<float, float>> boundaries;
   point* curr = field_start;
   std::vector<std::vector<point*>> cell(boundaries.size());
   obstacle* ob;
+
   float comparator = curr->next->x < curr->x ? boundaries[curr_boundary].second : boundaries[curr_boundary].first;
   do
   {
     curr = curr->prev;
   } while (curr->next->x < curr->x ? comparator > curr->prev->x : comparator < curr->prev->x);
+  
   for(int i = 0; i < boundaries.size(); i++)
   {
     float front = curr->next->x < curr->x ? boundaries[curr_boundary].first : boundaries[curr_boundary].second;
@@ -91,19 +93,22 @@ bool Field::BCD()
       std::vector<point*> points;
       if(curr->next->x < curr->x)
       {
-        points = obstacle_points(ob, boundaries[curr_boundary], 2);
+        points = obstacle_points(ob, boundaries[curr_boundary], 1);
       }
       else
       {
         points = obstacle_points(ob, boundaries[curr_boundary], 0);
       }
+
+      points[0]->prev = cell[i][cell[i].size()-1];
+      cell[i][cell[i].size()-1]->next = points[0];
       for(int j = 0; j < points.size(); j++)
       {
         cell[i].push_back(points[i]);
       }
+      cell[i][cell[i].size()-1]->next = cell[i][0];
+      cell[i][0]->next = cell[i][cell[i].size()-1];
     }
-    cell[i][cell[i].size()-1]->next = cell[i][0];
-    cell[i][0]->next = cell[i][cell[i].size()-1];
   }
   return true;
 }
@@ -145,11 +150,66 @@ obstacle* Field::find_obstacle(point* p, std::pair<float, float> extr)
 
 std::vector<point*> Field::obstacle_points(obstacle* o, std::pair<float, float> extr, int pos)
 {
-      //check that the bounds are included as points if not infer them with add()
-  if(pos == 0)
+  //check that the bounds are included as points if not infer them with add()
+  std::vector<point*> inter;
+  std::vector<point*> out;
+  point* curr;
+  for(int i = 0; i < o->perimeter.size(); i++)
   {
-
+    if(extr.first <= o->perimeter[i]->x && o->perimeter[i]->x <= extr.second)
+    {
+      inter.push_back(o->perimeter[i]);
+    }
   }
+  if(pos == 0) // decsencding
+  {
+    std::sort(inter.begin(), inter.end(), [](const point* a, const point* b) 
+              {return a->x > b->x;}); 
+    if(inter[0]->y < inter[1]->y && inter[1] != inter[0]->next)
+    {
+      curr = inter[0];
+    } else {
+      curr = inter[1];
+    }
+    do {
+      out.push_back(curr);
+      curr = curr->next;
+    } while (curr->x >= extr.first);
+
+    if(out[0]->x != extr.second)
+    {
+      out.emplace(out.begin(), infer_point(out[0]->prev, extr.second, 'x'));
+    }
+    if(out[out.size()-1]->x != extr.first)
+    {
+      out.emplace(out.begin(), infer_point(out[out.size()-1], extr.first, 'x'));
+    }
+  }
+  else if(pos == 1) // ascending
+  {
+    std::sort(inter.begin(), inter.end(), [](const point* a, const point* b) 
+              {return a->x < b->x;}); 
+    if(inter[0]->y > inter[1]->y && inter[1] != inter[0]->prev)
+    {
+      curr = inter[0];
+    } else {
+      curr = inter[1]; // this is simplistic in both most liekly need a loop in the future
+    }
+    do {
+      out.push_back(curr);
+      curr = curr->prev;
+    } while (curr->x <= extr.second);
+
+    if(out[0]->x != extr.first)
+    {
+      out.emplace(out.begin(), infer_point(out[0]->prev, extr.first, 'x'));
+    }
+    if(out[out.size()-1]->x != extr.second)
+    {
+      out.emplace(out.begin(), infer_point(out[out.size()-1], extr.second, 'x'));
+    }
+  }
+  return out;
 }
 
 point* Field::add(point* p, int level)

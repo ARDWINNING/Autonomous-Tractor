@@ -11,7 +11,7 @@ struct point {
   float y;
   point* next;
   point* prev;
-  point(int x_val, int y_val, point* n = nullptr, point* p = nullptr)
+  point(float x_val, float y_val, point* n = nullptr, point* p = nullptr)
     : x(x_val), y(y_val), next(n), prev(p) {}
   point(point* p)
     : x(p->x), y(p->y), next(p->next), prev(p->prev) {}
@@ -20,7 +20,6 @@ struct point {
 struct obstacle {
   std::vector<point*> perimeter;
   std::pair<float, float> x_extremes;
-  std::pair<float, float> y_of_x_extremes;
   obstacle* next;
   obstacle* prev;
   point* central_line;
@@ -48,7 +47,7 @@ class Field{
     bool BCD();
 
     // Helper Functions
-  std::vector<point*> obstacle_points(obstacle*, std::pair<float, float>, int);
+    std::vector<point*> obstacle_points(obstacle*, std::pair<float, float>, int);
     obstacle* find_obstacle(point*, std::pair<float, float>);
     point* infer_point(point*, const float, const char);
     void get_extremes();
